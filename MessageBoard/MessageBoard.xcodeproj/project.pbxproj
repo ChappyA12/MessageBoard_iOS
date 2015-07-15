@@ -34,6 +34,7 @@
 		F9F6B8101B56D53300140543 /* libstdc++.6.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F9F6B80D1B56D53300140543 /* libstdc++.6.dylib */; };
 		F9F6B8121B56D58100140543 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F9F6B8111B56D58100140543 /* Foundation.framework */; };
 		F9F6B8141B56D58D00140543 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F9F6B8131B56D58D00140543 /* UIKit.framework */; };
+		F9F6B8181B56E76E00140543 /* MessageBoardPage.m in Sources */ = {isa = PBXBuildFile; fileRef = F9F6B8171B56E76E00140543 /* MessageBoardPage.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -93,6 +94,8 @@
 		F9F6B8111B56D58100140543 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		F9F6B8131B56D58D00140543 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		F9F6B8151B56D7D700140543 /* MessageBoard-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "MessageBoard-Prefix.pch"; sourceTree = "<group>"; };
+		F9F6B8161B56E76E00140543 /* MessageBoardPage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MessageBoardPage.h; path = Classes/MessageBoardPage.h; sourceTree = "<group>"; };
+		F9F6B8171B56E76E00140543 /* MessageBoardPage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MessageBoardPage.m; path = Classes/MessageBoardPage.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -169,6 +172,7 @@
 				F92DA7AE1B56CC9E004B7D24 /* DataViewController.m */,
 				F92DA7B01B56CC9E004B7D24 /* ModelController.h */,
 				F92DA7B11B56CC9E004B7D24 /* ModelController.m */,
+				F9F6B8191B56E77A00140543 /* Classes */,
 				F92DA7B31B56CC9F004B7D24 /* Main.storyboard */,
 				F92DA7B61B56CC9F004B7D24 /* Assets.xcassets */,
 				F92DA7B81B56CC9F004B7D24 /* LaunchScreen.storyboard */,
@@ -228,6 +232,15 @@
 				F92DA81D1B56D3C6004B7D24 /* Bolts.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		F9F6B8191B56E77A00140543 /* Classes */ = {
+			isa = PBXGroup;
+			children = (
+				F9F6B8161B56E76E00140543 /* MessageBoardPage.h */,
+				F9F6B8171B56E76E00140543 /* MessageBoardPage.m */,
+			);
+			name = Classes;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -362,6 +375,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F92DA7AF1B56CC9E004B7D24 /* DataViewController.m in Sources */,
+				F9F6B8181B56E76E00140543 /* MessageBoardPage.m in Sources */,
 				F92DA7A91B56CC9E004B7D24 /* AppDelegate.m in Sources */,
 				F92DA7B21B56CC9E004B7D24 /* ModelController.m in Sources */,
 				F92DA7A61B56CC9E004B7D24 /* main.m in Sources */,

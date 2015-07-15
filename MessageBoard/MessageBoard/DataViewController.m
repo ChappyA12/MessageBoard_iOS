@@ -8,8 +8,11 @@
 
 #import "DataViewController.h"
 #import <Parse/Parse.h>
+#import "MessageBoardPage.h"
 
 @interface DataViewController ()
+
+@property (nonatomic) MessageBoardPage *page;
 
 @end
 
@@ -17,12 +20,19 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Do any additional setup after loading the view, typically from a nib.
+    
 }
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     self.dataLabel.text = [NSString stringWithFormat:@"Page: %@", self.pageNumber];
+    _page = [[MessageBoardPage alloc] initWithPageNumber:self.pageNumber];
+    [_page saveInBackgroundWithBlock:^(BOOL succeeded, NSError * __nullable error) {
+        if (succeeded) {
+            
+        }
+        else NSLog(@"%@",error.description);
+    }];
 }
 
 @end
