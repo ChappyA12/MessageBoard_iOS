@@ -12,13 +12,14 @@
 @implementation MessageBoardPage
 
 @dynamic pageNumber;
+@dynamic textObjects;
 
-+ (void)load { [self registerSubclass]; }
++ (void)load { [self registerSubclass]; self.te }
 
 + (NSString *)parseClassName { return @"MessageBoardPage"; }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"MessageBoardPage: %@",self.pageNumber];
+    return [NSString stringWithFormat:@"MessageBoardPage: {page} %@",self.pageNumber];
 }
 
 @end
