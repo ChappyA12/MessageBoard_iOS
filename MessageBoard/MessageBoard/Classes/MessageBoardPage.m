@@ -17,11 +17,8 @@
 
 + (NSString *)parseClassName { return @"MessageBoardPage"; }
 
-- (id) initWithPageNumber: (NSNumber *) number {
-    if (self = [super init]) {
-        number = self.pageNumber;
-    }
-    return self;
+- (NSString *)description {
+    return [NSString stringWithFormat:@"MessageBoardPage: %@",self.pageNumber];
 }
 
 @end

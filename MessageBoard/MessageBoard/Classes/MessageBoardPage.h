@@ -11,8 +11,6 @@
 @interface MessageBoardPage : PFObject<PFSubclassing>
 + (NSString *)parseClassName;
 
-- (id) initWithPageNumber: (NSNumber *) number;
-
 @property NSNumber *pageNumber;
 
 @end
