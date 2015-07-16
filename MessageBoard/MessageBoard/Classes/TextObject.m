@@ -13,6 +13,7 @@
 @dynamic text;
 @dynamic font;
 @dynamic fontSize;
+@dynamic scale;
 @dynamic location_x;
 @dynamic location_y;
 @dynamic rotation;
