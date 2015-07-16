@@ -18,11 +18,13 @@
 @property NSNumber *location_x;
 @property NSNumber *location_y;
 
+@property NSNumber *rotation; //0.0 - 2.0 (radians)
+
 @property NSNumber *color_r;
 @property NSNumber *color_g;
 @property NSNumber *color_b;
 
-@property PFRelation *pageObject;
+@property NSString *parentPageObjectID;
 
 + (NSString *)parseClassName;
 

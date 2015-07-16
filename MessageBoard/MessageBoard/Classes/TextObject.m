@@ -15,10 +15,11 @@
 @dynamic fontSize;
 @dynamic location_x;
 @dynamic location_y;
+@dynamic rotation;
 @dynamic color_r;
 @dynamic color_g;
 @dynamic color_b;
-@dynamic pageObject;
+@dynamic parentPageObjectID;
 
 + (void)load { [self registerSubclass]; }
 

@@ -33,19 +33,28 @@
 
     [self messageBoardPageForPageNumber:self.pageNumber completion:^(MessageBoardPage *result, NSError *error) {
         if (!error) {
-            if (result != nil) _page = result;
+            if (result != nil) {
+                _page = result;
+                for (UIView *view in self.canvas.subviews) [view removeFromSuperview];
+                [self textObjectsForMessageBoardPage:self.page completion:^(NSArray<TextObject *> *result, NSError *error) {
+                    if (!error) {
+                        for (TextObject *object in result) [self addUILabelForTextObject:object];
+                    }
+                    else NSLog(@"%@",error);
+                }];
+            }
             else {
                 _page = [MessageBoardPage object];
                 _page.pageNumber = self.pageNumber;
-                [_page saveInBackgroundWithBlock:^(BOOL succeeded, NSError * __nullable error) {
+                [_page saveInBackgroundWithBlock:^(BOOL succeeded, NSError * error) {
                     if (succeeded) {
                         NSLog(@"OBJECT SUCCESSFULLY CREATED");
                     }
-                    else NSLog(@"%@",error.description);
+                    else NSLog(@"%@",error);
                 }];
             }
         }
-        else NSLog(@"%@",error.description);
+        else NSLog(@"%@",error);
     }];
 }
 
@@ -66,6 +75,18 @@
     }];
 }
 
+- (void)textObjectsForMessageBoardPage: (MessageBoardPage *) page completion: (void (^)(NSArray<TextObject *> *result, NSError *error)) completion {
+    PFQuery *query = [PFQuery queryWithClassName:@"TextObject"];
+    [query whereKey:@"parentPageObjectID" equalTo:page.objectId];
+    [query findObjectsInBackgroundWithBlock:^(NSArray *objects, NSError *error) {
+        if (!error) {
+            if (objects.count == 0) completion(nil, nil);
+            else completion(objects, nil);
+        }
+        else completion(nil, error);
+    }];
+}
+
 - (void)addTextObjectToPageUsingCurrentContext {
     TextObject *text = [TextObject object];
     text.text = self.textField.text;
@@ -76,8 +97,11 @@
     text.color_r = [NSNumber numberWithInt:0];
     text.color_g = [NSNumber numberWithInt:0];
     text.color_b = [NSNumber numberWithInt:0];
-    [_page addTextObject:text];
-    //UPLOAD TO SERVER
+    text.parentPageObjectID = self.page.objectId;
+    [text saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+        if (succeeded) NSLog(@"TEXT OBJECT SUCCESSFULLY CREATED");
+        else NSLog(@"%@",error);
+    }];
     [self addUILabelForTextObject:text];
 }
 
