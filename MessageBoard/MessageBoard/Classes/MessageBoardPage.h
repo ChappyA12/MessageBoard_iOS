@@ -7,10 +7,15 @@
 //
 
 #import <Parse/Parse.h>
+@class TextObject;
 
 @interface MessageBoardPage : PFObject<PFSubclassing>
 + (NSString *)parseClassName;
 
 @property NSNumber *pageNumber;
+
+@property NSMutableArray<TextObject *> *textObjects;
+
+- (void)addTextObject: (TextObject *) object;
 
 @end

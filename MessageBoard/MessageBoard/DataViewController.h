@@ -11,7 +11,8 @@
 @interface DataViewController : UIViewController
 
 @property (strong, nonatomic) IBOutlet UILabel *dataLabel;
-@property (weak, nonatomic) IBOutlet UITextField *textField;
+@property (weak, nonatomic) IBOutlet UIView *canvas;
+@property (strong, nonatomic) IBOutlet UITextField *textField;
 
 @property (strong, nonatomic) NSNumber *pageNumber;
 
