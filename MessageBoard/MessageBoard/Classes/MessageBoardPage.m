@@ -12,6 +12,7 @@
 @implementation MessageBoardPage
 
 @dynamic pageNumber;
+@dynamic textObjects;
 
 + (void)load { [self registerSubclass]; }
 

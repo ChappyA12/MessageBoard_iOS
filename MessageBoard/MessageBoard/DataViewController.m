@@ -87,6 +87,7 @@
     }];
 }
 
+
 - (void)addTextObjectToPageUsingCurrentContext {
     TextObject *text = [TextObject object];
     text.text = self.textField.text;

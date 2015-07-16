@@ -14,4 +14,6 @@
 
 @property NSNumber *pageNumber;
 
+@property NSArray<TextObject *> *textObjects;
+
 @end
