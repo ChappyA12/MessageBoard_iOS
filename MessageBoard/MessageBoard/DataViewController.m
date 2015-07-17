@@ -84,30 +84,34 @@
     [self messageBoardPageForPageNumber:self.pageNumber completion:^(MessageBoardPage *result, NSError *error) {
         if (!error) {
             if (result != nil) {
-                if (![result.objectId isEqualToString:_page.objectId]) _page = result;
-                [self textObjectsForMessageBoardPage:self.page completion:^(NSArray<TextObject *> *result, NSError *error) {
-                    if (!error) {
-                        for (TextObject *testTextObject in result) {
-                            TextObject *existingTextObject = [self textObjectWithObjectID:testTextObject.objectId];
-                            if (existingTextObject) {
-                                if (![existingTextObject.updatedAt isEqualToDate:testTextObject.updatedAt]) { //object needs update
-                                    NSLog(@"UPDATE");
-                                    [self removeUILabelForTextObject:existingTextObject];
+                if (![_page.updatedAt isEqualToDate:result.updatedAt]) {
+                    NSLog(@"UPDATE NEEDED:");
+                    _page = result;
+                    [self textObjectsForMessageBoardPage:self.page completion:^(NSArray<TextObject *> *result, NSError *error) {
+                        if (!error) {
+                            for (TextObject *testTextObject in result) {
+                                TextObject *existingTextObject = [self textObjectWithObjectID:testTextObject.objectId];
+                                if (existingTextObject) {
+                                    if (![existingTextObject.updatedAt isEqualToDate:testTextObject.updatedAt]) { //object needs update
+                                        NSLog(@"UPDATE");
+                                        [self removeUILabelForTextObject:existingTextObject];
+                                        [self addUILabelUsingTextObject:testTextObject];
+                                        [_textObjects removeObject:existingTextObject];
+                                        [_textObjects addObject:testTextObject];
+                                    }
+                                }
+                                else { //new object needs to be created
+                                    NSLog(@"NEW");
                                     [self addUILabelUsingTextObject:testTextObject];
-                                    [_textObjects removeObject:existingTextObject];
                                     [_textObjects addObject:testTextObject];
                                 }
+                                //NEED TO CHECK FOR REMOVAL OF TEXT OBJECTS
                             }
-                            else { //new object needs to be created
-                                NSLog(@"NEW");
-                                [self addUILabelUsingTextObject:testTextObject];
-                                [_textObjects addObject:testTextObject];
-                            }
-                            //NEED TO CHECK FOR REMOVAL OF TEXT OBJECTS
                         }
-                    }
-                    else NSLog(@"%@",error);
-                }];
+                        else NSLog(@"%@",error);
+                    }];
+                    NSLog(@"\n\n");
+                }
             }
             else {
                 _page = [MessageBoardPage object];
@@ -236,6 +240,8 @@
         if (succeeded) ; //NSLog(@"TEXT OBJECT SUCCESSFULLY CREATED");
         else NSLog(@"%@",error);
     }];
+    _page.childrenLastUpdated = [NSDate date];
+    [_page saveInBackground];
     [_textObjects addObject:text];
     [self addUILabelUsingTextObject:text];
 }
@@ -296,6 +302,8 @@
         if (succeeded) ; //NSLog(@"TEXT OBJECT SUCCESSFULLY CREATED");
         else NSLog(@"%@",error);
     }];
+    _page.childrenLastUpdated = [NSDate date];
+    [_page saveInBackground];
     [self updateUILabelUsingTextObject:_editedTextObject];
 }
 
@@ -376,6 +384,8 @@
         if (succeeded) NSLog(@"SAVED");
         else NSLog(@"%@",error);
     }];
+    _page.childrenLastUpdated = [NSDate date];
+    [_page saveInBackground];
     _translatedTextObject.fontSize = [NSNumber numberWithFloat:[_translatedTextObject.fontSize floatValue]*[_translatedTextObject.scale floatValue]];
     _translatedTextObject.scale = [NSNumber numberWithFloat:1.0];
     _translatedTextObject = nil;

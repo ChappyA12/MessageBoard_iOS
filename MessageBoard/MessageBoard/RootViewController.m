@@ -28,7 +28,7 @@
     DataViewController *startingViewController = [self.modelController viewControllerAtIndex:0 storyboard:self.storyboard];
     NSArray *viewControllers = @[startingViewController];
     [self.pageViewController setViewControllers:viewControllers direction:UIPageViewControllerNavigationDirectionForward animated:NO completion:nil];
-    self.pageViewController.dataSource = self.modelController;
+    //self.pageViewController.dataSource = self.modelController; //TEMPORARILY DISABLED
     [self addChildViewController:self.pageViewController];
     [self.view addSubview:self.pageViewController.view];
     // Set the page view controller's bounds using an inset rect so that self's view is visible around the edges of the pages.

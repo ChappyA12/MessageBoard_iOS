@@ -14,6 +14,6 @@
 
 @property NSNumber *pageNumber;
 
-@property NSArray<TextObject *> *textObjects;
+@property NSDate *childrenLastUpdated;
 
 @end
