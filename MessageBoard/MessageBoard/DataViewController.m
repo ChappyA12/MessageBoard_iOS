@@ -89,15 +89,21 @@
                     _page = result;
                     [self textObjectsForMessageBoardPage:self.page completion:^(NSArray<TextObject *> *result, NSError *error) {
                         if (!error) {
+                            NSMutableArray<TextObject *> *unverifiedObjects = [[NSMutableArray alloc] initWithArray:_textObjects];
                             for (TextObject *testTextObject in result) {
                                 TextObject *existingTextObject = [self textObjectWithObjectID:testTextObject.objectId];
                                 if (existingTextObject) {
                                     if (![existingTextObject.updatedAt isEqualToDate:testTextObject.updatedAt]) { //object needs update
                                         NSLog(@"UPDATE");
-                                        [self removeUILabelForTextObject:existingTextObject];
+                                        [unverifiedObjects removeObject:existingTextObject];
+                                        NSString *Id = existingTextObject.objectId;
+                                        [self removeTextObject:existingTextObject];
+                                        testTextObject.objectId = existingTextObject;
                                         [self addUILabelUsingTextObject:testTextObject];
-                                        [_textObjects removeObject:existingTextObject];
                                         [_textObjects addObject:testTextObject];
+                                    }
+                                    else { //no object update needed
+                                        [unverifiedObjects removeObject:existingTextObject];
                                     }
                                 }
                                 else { //new object needs to be created
@@ -105,15 +111,18 @@
                                     [self addUILabelUsingTextObject:testTextObject];
                                     [_textObjects addObject:testTextObject];
                                 }
-                                //NEED TO CHECK FOR REMOVAL OF TEXT OBJECTS
+                            }
+                            for (TextObject *object in unverifiedObjects) { //objects to delete
+                                NSLog(@"DELETED");
+                                [self removeTextObject:object];
                             }
                         }
                         else NSLog(@"%@",error);
                     }];
-                    NSLog(@"\n\n");
                 }
             }
             else {
+                for (UIView *view in _canvas.subviews) [view removeFromSuperview];
                 _page = [MessageBoardPage object];
                 _page.pageNumber = self.pageNumber;
                 [_page saveInBackgroundWithBlock:^(BOOL succeeded, NSError * error) {
@@ -256,7 +265,11 @@
     label.textColor = [UIColor colorWithRed:[textObject.color_r floatValue] green:[textObject.color_g floatValue] blue:[textObject.color_b floatValue] alpha:1.0];
     label.textAlignment = NSTextAlignmentCenter;
     label.userInteractionEnabled = YES;
-    label.backgroundColor = [UIColor redColor];
+    label.backgroundColor = [UIColor redColor]; //TEMPORARY
+    label.numberOfLines = 0;
+    CGSize maximumLabelSize = CGSizeMake(350, 2000);
+    CGSize expectedSize = [label sizeThatFits:maximumLabelSize];
+    label.frame = CGRectMake(label.frame.origin.x, label.frame.origin.y, expectedSize.width, expectedSize.height);
     UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(userTappedUILabel:)];
     [label addGestureRecognizer:tapRecognizer];
     UIPanGestureRecognizer *dragRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(userDraggedUILabel:)];
@@ -265,6 +278,8 @@
     [label addGestureRecognizer:scaleRecognizer];
     UIRotationGestureRecognizer *rotateRecognizer = [[UIRotationGestureRecognizer alloc] initWithTarget:self action:@selector(userRotatedUILabel:)];
     [label addGestureRecognizer:rotateRecognizer];
+    UILongPressGestureRecognizer *longPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(userLongPressedUILabel:)];
+    [label addGestureRecognizer:longPressRecognizer];
     [_UILabelToTextObject setObject:textObject forKey:[NSNumber numberWithUnsignedLong:[label hash]]];
     [_TextObjectToUILabel setObject:label forKey:[NSNumber numberWithUnsignedLong:[textObject hash]]];
     [self.canvas addSubview:label];
@@ -316,13 +331,19 @@
     label.textColor = [UIColor colorWithRed:[textObject.color_r floatValue] green:[textObject.color_g floatValue] blue:[textObject.color_b floatValue] alpha:1.0];
     CGPoint loc = [self locationForUILabelUsingTextObject:textObject];
     label.frame = CGRectMake(loc.x-textSize.width/2, loc.y, textSize.width, textSize.height);
+    label.numberOfLines = 0;
+    CGSize maximumLabelSize = CGSizeMake(350, 2000);
+    CGSize expectedSize = [label sizeThatFits:maximumLabelSize];
+    label.frame = CGRectMake(label.frame.origin.x, label.frame.origin.y, expectedSize.width, expectedSize.height);
 }
 
-- (void)removeUILabelForTextObject: (TextObject *) textObject {
+- (void)removeTextObject: (TextObject *) textObject {
     UILabel *label = [_TextObjectToUILabel objectForKey:[NSNumber numberWithUnsignedLong:[textObject hash]]];
     [_UILabelToTextObject removeObjectForKey:[NSNumber numberWithUnsignedLong:[label hash]]];
     [_TextObjectToUILabel removeObjectForKey:[NSNumber numberWithUnsignedLong:[textObject hash]]];
     [label removeFromSuperview];
+    [textObject deleteInBackground];
+    [_textObjects removeObject:textObject];
 }
 
 #pragma mark - ISColorWheelDelegate methods
@@ -376,6 +397,10 @@
     //label.bounds = CGRectMake([textObject.location_x floatValue], [textObject.location_y floatValue], textSize.width, textSize.height);
     //label.center = CGPointMake(label.bounds.origin.x+label.bounds.size.width/2, label.bounds.origin.y+label.bounds.size.height/2);
     label.transform = CGAffineTransformMakeRotation([textObject.rotation floatValue]);
+    label.numberOfLines = 0;
+    CGSize maximumLabelSize = CGSizeMake(500, 2000);
+    CGSize expectedSize = [label sizeThatFits:maximumLabelSize];
+    label.frame = CGRectMake(label.frame.origin.x, label.frame.origin.y, expectedSize.width, expectedSize.height);
     _translatedTextObject = textObject;
 }
 
@@ -408,6 +433,13 @@
     TextObject *textEdited = [_UILabelToTextObject objectForKey: [NSNumber numberWithUnsignedLong: [sender.view hash]]];
     _editedTextObject = textEdited;
     [self beginEditingWithTextObject:textEdited];
+}
+
+- (IBAction)userLongPressedUILabel:(UILongPressGestureRecognizer *)sender {
+    TextObject *textEdited = [_UILabelToTextObject objectForKey: [NSNumber numberWithUnsignedLong: [sender.view hash]]];
+    [self removeTextObject:textEdited];
+    _page.childrenLastUpdated = [NSDate date];
+    [_page saveInBackground];
 }
 
 - (IBAction)userDraggedUILabel:(UIPanGestureRecognizer *)sender {
