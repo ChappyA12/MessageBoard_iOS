@@ -23,8 +23,11 @@
 @property CGPoint dragLocationInsideUILabel;
 @property ISColorWheel *colorWheel;
 
+@property NSTimer *updateTimer;
+
 @property NSMutableDictionary <NSNumber *, TextObject *> *UILabelToTextObject;
 @property NSMutableDictionary <NSNumber *, UILabel *> *TextObjectToUILabel;
+@property NSMutableArray <TextObject *> *textObjects;
 
 @end
 
@@ -41,6 +44,7 @@
     [super viewWillAppear:animated];
     _UILabelToTextObject = [[NSMutableDictionary alloc] init];
     _TextObjectToUILabel = [[NSMutableDictionary alloc] init];
+    _textObjects = [[NSMutableArray alloc] init];
     [self messageBoardPageForPageNumber:self.pageNumber completion:^(MessageBoardPage *result, NSError *error) {
         if (!error) {
             if (result != nil) {
@@ -48,7 +52,59 @@
                 for (UIView *view in self.canvas.subviews) [view removeFromSuperview];
                 [self textObjectsForMessageBoardPage:self.page completion:^(NSArray<TextObject *> *result, NSError *error) {
                     if (!error) {
-                        for (TextObject *object in result) [self addUILabelUsingTextObject:object];
+                        for (TextObject *object in result) {
+                            [self addUILabelUsingTextObject:object];
+                            [_textObjects addObject:object];
+                        }
+                    }
+                    else NSLog(@"%@",error);
+                }];
+            }
+            else {
+                _page = [MessageBoardPage object];
+                _page.pageNumber = self.pageNumber;
+                [_page saveInBackgroundWithBlock:^(BOOL succeeded, NSError * error) {
+                    if (succeeded) {
+                        NSLog(@"OBJECT SUCCESSFULLY CREATED");
+                    }
+                    else NSLog(@"%@",error);
+                }];
+            }
+        }
+        else NSLog(@"%@",error);
+    }];
+    _updateTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(updatePage:) userInfo:nil repeats:YES];
+}
+
+- (void)viewWillDisappear:(BOOL)animated {
+    [_updateTimer invalidate];
+}
+
+- (void)updatePage: (NSTimer *) sender {
+    [self messageBoardPageForPageNumber:self.pageNumber completion:^(MessageBoardPage *result, NSError *error) {
+        if (!error) {
+            if (result != nil) {
+                if (![result.objectId isEqualToString:_page.objectId]) _page = result;
+                [self textObjectsForMessageBoardPage:self.page completion:^(NSArray<TextObject *> *result, NSError *error) {
+                    if (!error) {
+                        for (TextObject *testTextObject in result) {
+                            TextObject *existingTextObject = [self textObjectWithObjectID:testTextObject.objectId];
+                            if (existingTextObject) {
+                                if (![existingTextObject.updatedAt isEqualToDate:testTextObject.updatedAt]) { //object needs update
+                                    NSLog(@"UPDATE");
+                                    [self removeUILabelForTextObject:existingTextObject];
+                                    [self addUILabelUsingTextObject:testTextObject];
+                                    [_textObjects removeObject:existingTextObject];
+                                    [_textObjects addObject:testTextObject];
+                                }
+                            }
+                            else { //new object needs to be created
+                                NSLog(@"NEW");
+                                [self addUILabelUsingTextObject:testTextObject];
+                                [_textObjects addObject:testTextObject];
+                            }
+                            //NEED TO CHECK FOR REMOVAL OF TEXT OBJECTS
+                        }
                     }
                     else NSLog(@"%@",error);
                 }];
@@ -68,7 +124,15 @@
     }];
 }
 
-#pragma mark - private getter methods
+#pragma mark - general private methods
+
+- (TextObject *)textObjectWithObjectID: (NSString *) objectID {
+    for (TextObject *object in _textObjects)
+        if ([object.objectId isEqualToString:objectID]) return object;
+    return nil;
+}
+
+#pragma mark - private server fetch methods
 
 - (void)messageBoardPageForPageNumber: (NSNumber *) number completion: (void (^)(MessageBoardPage *result, NSError *error)) completion {
     PFQuery *query = [PFQuery queryWithClassName:@"MessageBoardPage"];
@@ -95,6 +159,16 @@
         }
         else completion(nil, error);
     }];
+}
+
+#pragma mark - private point conversion methods
+
+- (CGPoint)locationForUILabelUsingTextObject: (TextObject *) textObject {
+    return CGPointMake([textObject.location_x floatValue]*_canvas.frame.size.width, [textObject.location_y floatValue]*_canvas.frame.size.height);
+}
+
+- (CGPoint)locationForTextObjectUsingPoint: (CGPoint) point {
+    return CGPointMake(point.x/_canvas.frame.size.width, point.y/_canvas.frame.size.height);
 }
 
 #pragma mark - private text editing methods
@@ -150,8 +224,9 @@
     text.font = @"helvetica-bold";
     text.fontSize = [NSNumber numberWithInt:40];
     text.scale = [NSNumber numberWithFloat:1.0];
-    text.location_x = [NSNumber numberWithFloat: _lastTouchLocation.x];
-    text.location_y = [NSNumber numberWithFloat: _lastTouchLocation.y];
+    CGPoint loc = [self locationForTextObjectUsingPoint:_lastTouchLocation];
+    text.location_x = [NSNumber numberWithFloat: loc.x];
+    text.location_y = [NSNumber numberWithFloat: loc.y];
     text.rotation = [NSNumber numberWithFloat:0.0];
     text.color_r = [NSNumber numberWithInt:0];
     text.color_g = [NSNumber numberWithInt:0];
@@ -161,13 +236,15 @@
         if (succeeded) ; //NSLog(@"TEXT OBJECT SUCCESSFULLY CREATED");
         else NSLog(@"%@",error);
     }];
+    [_textObjects addObject:text];
     [self addUILabelUsingTextObject:text];
 }
 
 - (void)addUILabelUsingTextObject: (TextObject *) textObject{
     UIFont *font = [UIFont fontWithName:textObject.font size:[textObject.fontSize floatValue]];
     CGSize textSize = [textObject.text sizeWithAttributes:@{NSFontAttributeName:font}];
-    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake([textObject.location_x floatValue]-textSize.width/2, [textObject.location_y floatValue], textSize.width, textSize.height)];
+    CGPoint loc = [self locationForUILabelUsingTextObject:textObject];
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(loc.x-textSize.width/2, loc.y, textSize.width, textSize.height)];
     label.text = textObject.text;
     label.font = font;
     label.textColor = [UIColor colorWithRed:[textObject.color_r floatValue] green:[textObject.color_g floatValue] blue:[textObject.color_b floatValue] alpha:1.0];
@@ -229,7 +306,15 @@
     label.text = textObject.text;
     label.font = font;
     label.textColor = [UIColor colorWithRed:[textObject.color_r floatValue] green:[textObject.color_g floatValue] blue:[textObject.color_b floatValue] alpha:1.0];
-    label.frame = CGRectMake([textObject.location_x floatValue]-textSize.width/2, [textObject.location_y floatValue], textSize.width, textSize.height);
+    CGPoint loc = [self locationForUILabelUsingTextObject:textObject];
+    label.frame = CGRectMake(loc.x-textSize.width/2, loc.y, textSize.width, textSize.height);
+}
+
+- (void)removeUILabelForTextObject: (TextObject *) textObject {
+    UILabel *label = [_TextObjectToUILabel objectForKey:[NSNumber numberWithUnsignedLong:[textObject hash]]];
+    [_UILabelToTextObject removeObjectForKey:[NSNumber numberWithUnsignedLong:[label hash]]];
+    [_TextObjectToUILabel removeObjectForKey:[NSNumber numberWithUnsignedLong:[textObject hash]]];
+    [label removeFromSuperview];
 }
 
 #pragma mark - ISColorWheelDelegate methods
@@ -256,8 +341,10 @@
 #pragma mark - private text movement / scaling / rotation methods
 
 - (void)updateTextObject: (TextObject *) textObject withLocation: (CGPoint) location {
-    textObject.location_x = [NSNumber numberWithFloat: location.x - _dragLocationInsideUILabel.x];
-    textObject.location_y = [NSNumber numberWithFloat: location.y - _dragLocationInsideUILabel.y];
+    CGPoint loc = [self locationForTextObjectUsingPoint:location];
+    CGPoint adjLoc = [self locationForTextObjectUsingPoint:_dragLocationInsideUILabel];
+    textObject.location_x = [NSNumber numberWithFloat: loc.x - adjLoc.x];
+    textObject.location_y = [NSNumber numberWithFloat: loc.y - adjLoc.y];
     [self updateUILabelLocationScaleRotationWithTextObject:textObject];
 }
 
@@ -276,7 +363,8 @@
     UIFont *font = [UIFont fontWithName:textObject.font size:[textObject.fontSize floatValue]*[textObject.scale floatValue]];
     CGSize textSize = [textObject.text sizeWithAttributes:@{NSFontAttributeName:font}];
     label.font = font;
-    label.frame = CGRectMake([textObject.location_x floatValue], [textObject.location_y floatValue], textSize.width, textSize.height);
+    CGPoint loc = [self locationForUILabelUsingTextObject:textObject];
+    label.frame = CGRectMake(loc.x, loc.y, textSize.width, textSize.height);
     //label.bounds = CGRectMake([textObject.location_x floatValue], [textObject.location_y floatValue], textSize.width, textSize.height);
     //label.center = CGPointMake(label.bounds.origin.x+label.bounds.size.width/2, label.bounds.origin.y+label.bounds.size.height/2);
     label.transform = CGAffineTransformMakeRotation([textObject.rotation floatValue]);
