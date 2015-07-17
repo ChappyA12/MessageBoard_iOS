@@ -32,7 +32,7 @@
     [super viewDidLoad];
     self.dataLabel.text = [NSString stringWithFormat:@"Page: %@", self.pageNumber];
     _userKeyboardIsShowing = NO;
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyBoardAppeared:) name:UIKeyboardDidShowNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardAppeared::) name:UIKeyboardDidShowNotification object:nil];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -202,9 +202,9 @@
 
 #pragma mark - keyboard notifiction
 
-- (void)keyboardAppeared:(NSNotification*)notification {
-    NSDictionary* keyboardInfo = [notification userInfo];
-    NSValue* keyboardFrameBegin = [keyboardInfo valueForKey:UIKeyboardFrameBeginUserInfoKey];
+- (void)keyboardAppeared: (NSNotification *) notification {
+    NSDictionary *keyboardInfo = [notification userInfo];
+    NSValue *keyboardFrameBegin = [keyboardInfo valueForKey:UIKeyboardFrameBeginUserInfoKey];
     CGRect keyboardFrameBeginRect = [keyboardFrameBegin CGRectValue];
     self.textField.frame = CGRectMake(8, self.view.frame.size.height-keyboardFrameBeginRect.size.height-80, self.canvas.frame.size.width-16, 80);
 }
