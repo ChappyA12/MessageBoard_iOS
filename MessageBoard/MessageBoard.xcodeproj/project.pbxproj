@@ -29,6 +29,7 @@
 		F92DA8201B56D3C6004B7D24 /* ParseCrashReporting.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F92DA81B1B56D3C6004B7D24 /* ParseCrashReporting.framework */; };
 		F92DA8211B56D3C6004B7D24 /* Parse.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F92DA81C1B56D3C6004B7D24 /* Parse.framework */; };
 		F92DA8221B56D3C6004B7D24 /* Bolts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F92DA81D1B56D3C6004B7D24 /* Bolts.framework */; };
+		F97B35DF1B59675400504163 /* ISColorWheel.m in Sources */ = {isa = PBXBuildFile; fileRef = F97B35DE1B59675400504163 /* ISColorWheel.m */; };
 		F998D9BF1B5710F400975310 /* TextObject.m in Sources */ = {isa = PBXBuildFile; fileRef = F998D9BE1B5710F400975310 /* TextObject.m */; };
 		F9F6B80E1B56D53300140543 /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F9F6B80B1B56D53300140543 /* libsqlite3.dylib */; };
 		F9F6B80F1B56D53300140543 /* libz.1.1.3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F9F6B80C1B56D53300140543 /* libz.1.1.3.dylib */; };
@@ -89,6 +90,8 @@
 		F92DA81B1B56D3C6004B7D24 /* ParseCrashReporting.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ParseCrashReporting.framework; path = Frameworks/ParseCrashReporting.framework; sourceTree = "<group>"; };
 		F92DA81C1B56D3C6004B7D24 /* Parse.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Parse.framework; path = Frameworks/Parse.framework; sourceTree = "<group>"; };
 		F92DA81D1B56D3C6004B7D24 /* Bolts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Bolts.framework; path = Frameworks/Bolts.framework; sourceTree = "<group>"; };
+		F97B35DD1B59675400504163 /* ISColorWheel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ISColorWheel.h; path = "Third Party/ISColorWheel.h"; sourceTree = "<group>"; };
+		F97B35DE1B59675400504163 /* ISColorWheel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ISColorWheel.m; path = "Third Party/ISColorWheel.m"; sourceTree = "<group>"; };
 		F998D9BD1B5710F400975310 /* TextObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TextObject.h; path = Classes/TextObject.h; sourceTree = "<group>"; };
 		F998D9BE1B5710F400975310 /* TextObject.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TextObject.m; path = Classes/TextObject.m; sourceTree = "<group>"; };
 		F9F6B80B1B56D53300140543 /* libsqlite3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.dylib; path = usr/lib/libsqlite3.dylib; sourceTree = SDKROOT; };
@@ -176,6 +179,7 @@
 				F92DA7B01B56CC9E004B7D24 /* ModelController.h */,
 				F92DA7B11B56CC9E004B7D24 /* ModelController.m */,
 				F9F6B8191B56E77A00140543 /* Classes */,
+				F97B35E01B59675E00504163 /* Third Party */,
 				F92DA7B31B56CC9F004B7D24 /* Main.storyboard */,
 				F92DA7B61B56CC9F004B7D24 /* Assets.xcassets */,
 				F92DA7B81B56CC9F004B7D24 /* LaunchScreen.storyboard */,
@@ -235,6 +239,15 @@
 				F92DA81D1B56D3C6004B7D24 /* Bolts.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		F97B35E01B59675E00504163 /* Third Party */ = {
+			isa = PBXGroup;
+			children = (
+				F97B35DD1B59675400504163 /* ISColorWheel.h */,
+				F97B35DE1B59675400504163 /* ISColorWheel.m */,
+			);
+			name = "Third Party";
 			sourceTree = "<group>";
 		};
 		F9F6B8191B56E77A00140543 /* Classes */ = {
@@ -380,6 +393,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F92DA7AF1B56CC9E004B7D24 /* DataViewController.m in Sources */,
+				F97B35DF1B59675400504163 /* ISColorWheel.m in Sources */,
 				F9F6B8181B56E76E00140543 /* MessageBoardPage.m in Sources */,
 				F998D9BF1B5710F400975310 /* TextObject.m in Sources */,
 				F92DA7A91B56CC9E004B7D24 /* AppDelegate.m in Sources */,

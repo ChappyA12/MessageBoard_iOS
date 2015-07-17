@@ -10,8 +10,9 @@
 #import <Parse/Parse.h>
 #import "MessageBoardPage.h"
 #import "TextObject.h"
+#import "ISColorWheel.h"
 
-@interface DataViewController () <UITextFieldDelegate>
+@interface DataViewController () <UITextFieldDelegate, ISColorWheelDelegate>
 
 @property (nonatomic) MessageBoardPage *page;
 
@@ -20,6 +21,7 @@
 @property TextObject *editedTextObject;
 @property TextObject *translatedTextObject;
 @property CGPoint dragLocationInsideUILabel;
+@property ISColorWheel *colorWheel;
 
 @property NSMutableDictionary <NSNumber *, TextObject *> *UILabelToTextObject;
 @property NSMutableDictionary <NSNumber *, UILabel *> *TextObjectToUILabel;
@@ -32,7 +34,7 @@
     [super viewDidLoad];
     self.dataLabel.text = [NSString stringWithFormat:@"Page: %@", self.pageNumber];
     _userKeyboardIsShowing = NO;
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardAppeared::) name:UIKeyboardDidShowNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillAppear:) name:UIKeyboardWillShowNotification object:nil];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -103,7 +105,7 @@
         self.textField.text = textObject.text;
         if ([textObject.fontSize floatValue] > 70.0) self.textField.font = [UIFont fontWithName:textObject.font size:70.0];
         else self.textField.font = [UIFont fontWithName:textObject.font size:[textObject.fontSize intValue]];
-        self.textField.textColor = [UIColor colorWithRed:[textObject.color_r intValue] / 255.0 green:[textObject.color_g intValue] / 255.0 blue:[textObject.color_b intValue] / 255.0 alpha:1.0];
+        self.textField.textColor = [UIColor colorWithRed:[textObject.color_r floatValue] green:[textObject.color_g floatValue] blue:[textObject.color_b floatValue] alpha:1.0];
     }
     else {
         self.textField.text = @"TEST";
@@ -112,7 +114,6 @@
     self.textField.textAlignment = NSTextAlignmentCenter;
     self.textField.delegate = self;
     self.textField.returnKeyType = UIReturnKeyDone;
-    
     [self.textField becomeFirstResponder];
     UIVisualEffect *blurEffect;
     blurEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleDark];
@@ -120,7 +121,25 @@
     visualEffectView = [[UIVisualEffectView alloc] initWithEffect:blurEffect];
     visualEffectView.frame = self.view.frame;
     visualEffectView.tag = 10;
+    visualEffectView.userInteractionEnabled = YES;
+    UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(endEditing:)];
+    [visualEffectView addGestureRecognizer:tapRecognizer];
     [self.view addSubview:visualEffectView];
+    _colorWheel = [[ISColorWheel alloc] initWithFrame:CGRectMake(8, 28, 100, 100)];
+    [_colorWheel setCurrentColor:self.textField.textColor];
+    _colorWheel.delegate = self;
+    [visualEffectView addSubview:_colorWheel];
+    UISlider *slider = [[UISlider alloc] initWithFrame:CGRectMake(8, 32+100+8, 100, 20)];
+    slider.minimumValue = 0.0;
+    slider.maximumValue = 1.0;
+    CGFloat brightness = 0.0;
+    [self.textField.textColor getHue:nil saturation:nil brightness:&brightness alpha:nil];
+    slider.value = brightness;
+    slider.minimumTrackTintColor = [UIColor colorWithWhite:1 alpha:0.35];
+    slider.maximumTrackTintColor = [UIColor colorWithWhite:1 alpha:0.15];
+    slider.thumbTintColor = [UIColor colorWithWhite:1 alpha:1];
+    [slider addTarget:self action:@selector(brightnessAdjusted:) forControlEvents:UIControlEventValueChanged];
+    [visualEffectView addSubview:slider];
     [self.view addSubview:self.textField];
     _userKeyboardIsShowing = YES;
 }
@@ -151,7 +170,7 @@
     UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake([textObject.location_x floatValue]-textSize.width/2, [textObject.location_y floatValue], textSize.width, textSize.height)];
     label.text = textObject.text;
     label.font = font;
-    label.textColor = [UIColor colorWithRed:[textObject.color_r intValue] / 255.0 green:[textObject.color_g intValue] / 255.0 blue:[textObject.color_b intValue] / 255.0 alpha:1.0];
+    label.textColor = [UIColor colorWithRed:[textObject.color_r floatValue] green:[textObject.color_g floatValue] blue:[textObject.color_b floatValue] alpha:1.0];
     label.textAlignment = NSTextAlignmentCenter;
     label.userInteractionEnabled = YES;
     label.backgroundColor = [UIColor redColor];
@@ -166,6 +185,12 @@
     [_UILabelToTextObject setObject:textObject forKey:[NSNumber numberWithUnsignedLong:[label hash]]];
     [_TextObjectToUILabel setObject:label forKey:[NSNumber numberWithUnsignedLong:[textObject hash]]];
     [self.canvas addSubview:label];
+    [self updateUILabelUsingTextObject:textObject];
+    [self updateUILabelLocationScaleRotationWithTextObject:textObject];
+}
+
+- (void)endEditing: (UIView *) sender {
+    [self endEditing];
 }
 
 - (void)endEditing {
@@ -173,16 +198,23 @@
     if (!_editedTextObject) { [self addTextObjectToPageUsingTextField:_textField]; NSLog(@"UILABEL ADDED"); }
     else  { [self updateTextObjectUsingTextField:_textField ]; NSLog(@"UILABEL UPDATED"); }
     [self.textField removeFromSuperview];
-    [[self.view viewWithTag:10] removeFromSuperview];
+    UIView *view = [self.view viewWithTag:10];
+    [UIView animateWithDuration:0.2 delay:0.0 options: UIViewAnimationOptionCurveEaseInOut
+                     animations:^{ view.alpha = 0.0; }
+                     completion:^(BOOL finished){ [view removeFromSuperview]; }];
     _userKeyboardIsShowing = NO;
     _editedTextObject = nil;
 }
 
 - (void)updateTextObjectUsingTextField: (UITextField *) textField {
     _editedTextObject.text = textField.text;
-    _editedTextObject.color_r = [NSNumber numberWithInt:0];
-    _editedTextObject.color_g = [NSNumber numberWithInt:0];
-    _editedTextObject.color_b = [NSNumber numberWithInt:0];
+    CGFloat red = 0.0;
+    CGFloat green = 0.0;
+    CGFloat blue = 0.0;
+    [NSNumber numberWithInt:[textField.textColor getRed:&red green:&green blue:&blue alpha:nil]];
+    _editedTextObject.color_r = [NSNumber numberWithFloat:red];
+    _editedTextObject.color_g = [NSNumber numberWithFloat:green];
+    _editedTextObject.color_b = [NSNumber numberWithFloat:blue];
     [_editedTextObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
         if (succeeded) ; //NSLog(@"TEXT OBJECT SUCCESSFULLY CREATED");
         else NSLog(@"%@",error);
@@ -196,13 +228,25 @@
     CGSize textSize = [textObject.text sizeWithAttributes:@{NSFontAttributeName:font}];
     label.text = textObject.text;
     label.font = font;
-    label.textColor = [UIColor colorWithRed:[textObject.color_r intValue] / 255.0 green:[textObject.color_g intValue] / 255.0 blue:[textObject.color_b intValue] / 255.0 alpha:1.0];
+    label.textColor = [UIColor colorWithRed:[textObject.color_r floatValue] green:[textObject.color_g floatValue] blue:[textObject.color_b floatValue] alpha:1.0];
     label.frame = CGRectMake([textObject.location_x floatValue]-textSize.width/2, [textObject.location_y floatValue], textSize.width, textSize.height);
+}
+
+#pragma mark - ISColorWheelDelegate methods
+
+- (void)colorWheelDidChangeColor:(ISColorWheel *)colorWheel {
+    _textField.textColor = colorWheel.currentColor;
+}
+
+#pragma mark - UISlider methods
+
+- (void)brightnessAdjusted: (UISlider *)sender {
+    _colorWheel.brightness = sender.value;
 }
 
 #pragma mark - keyboard notifiction
 
-- (void)keyboardAppeared: (NSNotification *) notification {
+- (void)keyboardWillAppear: (NSNotification *) notification {
     NSDictionary *keyboardInfo = [notification userInfo];
     NSValue *keyboardFrameBegin = [keyboardInfo valueForKey:UIKeyboardFrameBeginUserInfoKey];
     CGRect keyboardFrameBeginRect = [keyboardFrameBegin CGRectValue];
@@ -233,6 +277,8 @@
     CGSize textSize = [textObject.text sizeWithAttributes:@{NSFontAttributeName:font}];
     label.font = font;
     label.frame = CGRectMake([textObject.location_x floatValue], [textObject.location_y floatValue], textSize.width, textSize.height);
+    //label.bounds = CGRectMake([textObject.location_x floatValue], [textObject.location_y floatValue], textSize.width, textSize.height);
+    //label.center = CGPointMake(label.bounds.origin.x+label.bounds.size.width/2, label.bounds.origin.y+label.bounds.size.height/2);
     label.transform = CGAffineTransformMakeRotation([textObject.rotation floatValue]);
     _translatedTextObject = textObject;
 }
@@ -276,14 +322,14 @@
 - (IBAction)userScaledUILabel:(UIPinchGestureRecognizer *)sender {
     TextObject *textEdited = [_UILabelToTextObject objectForKey: [NSNumber numberWithUnsignedLong: [sender.view hash]]];
     [self updateTextObject:textEdited WithScale:sender.scale];
-    [self updateTextObject:textEdited withLocation:[sender locationInView:_canvas]];
+    //[self updateTextObject:textEdited withLocation:[sender locationInView:_canvas]];
     if (sender.state == UIGestureRecognizerStateEnded) [self endTranslation];
 }
 
 - (IBAction)userRotatedUILabel:(UIRotationGestureRecognizer *)sender {
     TextObject *textEdited = [_UILabelToTextObject objectForKey: [NSNumber numberWithUnsignedLong: [sender.view hash]]];
     [self updateTextObject:textEdited WithRotation:sender.rotation];
-    [self updateTextObject:textEdited withLocation:[sender locationInView:_canvas]];
+    //[self updateTextObject:textEdited withLocation:[sender locationInView:_canvas]];
     if (sender.state == UIGestureRecognizerStateEnded) [self endTranslation];
 }
 
