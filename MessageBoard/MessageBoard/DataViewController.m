@@ -235,14 +235,16 @@
     text.color_b = [NSNumber numberWithInt:0];
     text.parentPageObjectID = self.page.objectId;
     [text saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
-        if (succeeded) ; //NSLog(@"TEXT OBJECT SUCCESSFULLY CREATED");
+        if (succeeded) {
+            [_objectIDs addObject:text.objectId];
+            MBLabel *label = [[MBLabel alloc] initWithTextObject:text andCanvas:_canvas];
+            label.delegate = self;
+            [_canvas addSubview:label];
+        }
         else NSLog(@"%@",error);
     }];
     _page.childrenLastUpdated = [NSDate date];
     [_page saveInBackground];
-    [_objectIDs addObject:text.objectId];
-    MBLabel *label = [[MBLabel alloc] initWithTextObject:text andCanvas:_canvas];
-    [_canvas addSubview:label];
 }
 
 - (void)endEditing: (UIView *) sender {
@@ -278,6 +280,7 @@
     _page.childrenLastUpdated = [NSDate date];
     [_page saveInBackground];
     MBLabel *label = [_MBLabelForObjectID objectForKey:_editedTextObject.objectId];
+    label.delegate = self;
     [label updateText];
 }
 

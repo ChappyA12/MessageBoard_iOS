@@ -13,32 +13,32 @@
 
 - (id)initWithTextObject: (TextObject *) textObject andCanvas: (UIView *) canvas {
     if (self = [super init]) {
+        _textObject = textObject;
         _canvasSize = canvas.frame.size;
-        UIFont *font = [UIFont fontWithName:textObject.font size:[textObject.fontSize floatValue]];
-        CGSize textSize = [textObject.text sizeWithAttributes:@{NSFontAttributeName:font}];
+        UIFont *font = [UIFont fontWithName:_textObject.font size:[_textObject.fontSize floatValue]];
+        CGSize textSize = [_textObject.text sizeWithAttributes:@{NSFontAttributeName:font}];
         CGPoint loc = [self canvasLocation];
-        UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(loc.x-textSize.width/2, loc.y, textSize.width, textSize.height)];
-        label.text = textObject.text;
-        label.font = font;
-        label.textColor = [UIColor colorWithRed:[textObject.color_r floatValue] green:[textObject.color_g floatValue] blue:[textObject.color_b floatValue] alpha:1.0];
-        label.textAlignment = NSTextAlignmentCenter;
-        label.userInteractionEnabled = YES;
-        label.backgroundColor = [UIColor redColor]; //TEMPORARY
-        label.numberOfLines = 0;
+        self.frame = CGRectMake(loc.x-textSize.width/2, loc.y, textSize.width, textSize.height);
+        self.text = _textObject.text;
+        self.font = font;
+        self.textColor = [UIColor colorWithRed:[_textObject.color_r floatValue] green:[_textObject.color_g floatValue] blue:[_textObject.color_b floatValue] alpha:1.0];
+        self.textAlignment = NSTextAlignmentCenter;
+        self.userInteractionEnabled = YES;
+        self.backgroundColor = [UIColor redColor]; //TEMPORARY
+        self.numberOfLines = 0;
         CGSize maximumLabelSize = CGSizeMake(350, 2000);
-        CGSize expectedSize = [label sizeThatFits:maximumLabelSize];
-        label.frame = CGRectMake(label.frame.origin.x, label.frame.origin.y, expectedSize.width, expectedSize.height);
+        CGSize expectedSize = [self sizeThatFits:maximumLabelSize];
+        self.frame = CGRectMake(self.frame.origin.x, self.frame.origin.y, expectedSize.width, expectedSize.height);
         UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(userTappedUILabel:)];
-        [label addGestureRecognizer:tapRecognizer];
+        [self addGestureRecognizer:tapRecognizer];
         UIPanGestureRecognizer *dragRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(userDraggedUILabel:)];
-        [label addGestureRecognizer:dragRecognizer];
+        [self addGestureRecognizer:dragRecognizer];
         UIPinchGestureRecognizer *scaleRecognizer = [[UIPinchGestureRecognizer alloc] initWithTarget:self action:@selector(userScaledUILabel:)];
-        [label addGestureRecognizer:scaleRecognizer];
+        [self addGestureRecognizer:scaleRecognizer];
         UIRotationGestureRecognizer *rotateRecognizer = [[UIRotationGestureRecognizer alloc] initWithTarget:self action:@selector(userRotatedUILabel:)];
-        [label addGestureRecognizer:rotateRecognizer];
+        [self addGestureRecognizer:rotateRecognizer];
         UILongPressGestureRecognizer *longPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(userLongPressedUILabel:)];
-        [label addGestureRecognizer:longPressRecognizer];
-        [self updateText];
+        [self addGestureRecognizer:longPressRecognizer];
         [self updateTranslations];
     }
     return self;
