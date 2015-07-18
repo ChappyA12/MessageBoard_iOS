@@ -27,7 +27,7 @@
 + (NSString *)parseClassName { return @"TextObject"; }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"TextObject: \n{text} %@ \n{position} %@,%@",self.text,self.location_x,self.location_y];
+    return [NSString stringWithFormat:@"TextObject: \n{text} %@ \n{position} (%@, %@) \n{Updated} %@",self.text,self.location_x,self.location_y, [self.updatedAt timeIntervalSinceReferenceDate]];
 }
 
 - (NSUInteger)hash {

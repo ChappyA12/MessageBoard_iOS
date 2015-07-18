@@ -19,7 +19,7 @@
 
 @property CGPoint lastTouchLocation;
 @property BOOL userKeyboardIsShowing;
-@property TextObject *editedTextObject;
+@property MBLabel *editedLabel;
 @property CGPoint dragLocationInsideUILabel;
 @property ISColorWheel *colorWheel;
 
@@ -54,6 +54,7 @@
                     if (!error) {
                         for (TextObject *object in result) {
                             MBLabel *label = [[MBLabel alloc] initWithTextObject:object andCanvas:_canvas];
+                            label.delegate = self;
                             [_MBLabelForObjectID setObject:label forKey:object.objectId];
                             [_TextObjectForObjectID setObject:object forKey:object.objectId];
                             [_canvas addSubview:label];
@@ -100,6 +101,7 @@
                                         NSLog(@"UPDATE");
                                         existingTextObject = testTextObject;
                                         MBLabel *label = [_MBLabelForObjectID objectForKey:existingTextObject.objectId];
+                                        label.textObject = testTextObject;
                                         [label updateText];
                                         [label updateTranslations];
                                     }
@@ -107,15 +109,12 @@
                                 }
                                 else { //new object needs to be created
                                     NSLog(@"NEW");
-                                    MBLabel *label = [[MBLabel alloc] initWithTextObject:testTextObject andCanvas:_canvas];
-                                    [_MBLabelForObjectID setObject:label forKey:testTextObject.objectId];
-                                    [_TextObjectForObjectID setObject:testTextObject forKey:testTextObject.objectId];
-                                    [_canvas addSubview:label];
+                                    [self addMBLabelForTextObject:testTextObject];
                                 }
                             }
                             for (TextObject *object in unverifiedObjects) { //objects to delete
                                 NSLog(@"DELETED");
-                                [self shouldBeginEditingMBLabel:[_MBLabelForObjectID objectForKey:object.objectId]];
+                                [self shouldRemoveMBLabel:[_MBLabelForObjectID objectForKey:object.objectId]];
                             }
                         }
                         else NSLog(@"%@",error);
@@ -167,6 +166,11 @@
     }];
 }
 
+- (void)signifyPageUpdateNeeded {
+    _page.childrenLastUpdated = [NSDate date];
+    [_page saveInBackground];
+}
+
 #pragma mark - private point conversion methods
 
 - (CGPoint)locationForTextObjectUsingPoint: (CGPoint) point {
@@ -175,9 +179,93 @@
 
 #pragma mark - private text editing methods
 
+- (void)addTextObjectToPageUsingTextField: (UITextField *) textField {
+    TextObject *text = [TextObject object];
+    text.text = textField.text;
+    text.font = @"helvetica-bold";
+    text.fontSize = [NSNumber numberWithInt:40];
+    text.scale = [NSNumber numberWithFloat:1.0];
+    CGPoint loc = [self locationForTextObjectUsingPoint:_lastTouchLocation];
+    text.location_x = [NSNumber numberWithFloat: loc.x];
+    text.location_y = [NSNumber numberWithFloat: loc.y];
+    text.rotation = [NSNumber numberWithFloat:0.0];
+    text.color_r = [NSNumber numberWithInt:0];
+    text.color_g = [NSNumber numberWithInt:0];
+    text.color_b = [NSNumber numberWithInt:0];
+    text.parentPageObjectID = self.page.objectId;
+    [text saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+        if (succeeded) [self addMBLabelForTextObject:text];
+        else NSLog(@"%@",error);
+    }];
+}
+
+- (void)updateTextObjectUsingTextField: (UITextField *) textField {
+    _editedLabel.textObject.text = textField.text;
+    CGFloat red = 0.0;
+    CGFloat green = 0.0;
+    CGFloat blue = 0.0;
+    [NSNumber numberWithInt:[textField.textColor getRed:&red green:&green blue:&blue alpha:nil]];
+    _editedLabel.textObject.color_r = [NSNumber numberWithFloat:red];
+    _editedLabel.textObject.color_g = [NSNumber numberWithFloat:green];
+    _editedLabel.textObject.color_b = [NSNumber numberWithFloat:blue];
+    [_editedLabel.textObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+        if (succeeded) ; //NSLog(@"TEXT OBJECT SUCCESSFULLY CREATED");
+        else NSLog(@"%@",error);
+    }];
+    [_editedLabel updateText];
+}
+
+- (void)endEditing: (UIView *) sender {
+    [self.textField resignFirstResponder];
+    if (!_editedLabel) { [self addTextObjectToPageUsingTextField:_textField]; NSLog(@"UILABEL ADDED"); }
+    else  { [self updateTextObjectUsingTextField:_textField ]; NSLog(@"UILABEL UPDATED"); }
+    [self.textField removeFromSuperview];
+    UIView *view = [self.view viewWithTag:10];
+    [UIView animateWithDuration:0.2 delay:0.0 options: UIViewAnimationOptionCurveEaseInOut
+                     animations:^{ view.alpha = 0.0; }
+                     completion:^(BOOL finished){ [view removeFromSuperview]; }];
+    _userKeyboardIsShowing = NO;
+    _editedLabel = nil;
+    [self signifyPageUpdateNeeded];
+}
+
+#pragma mark - MBLabel methods
+
+- (void)addMBLabelForTextObject: (TextObject *) textObject {
+    MBLabel *label = [[MBLabel alloc] initWithTextObject:textObject andCanvas:_canvas];
+    label.delegate = self;
+    [_MBLabelForObjectID setObject:label forKey:textObject.objectId];
+    [_TextObjectForObjectID setObject:textObject forKey:textObject.objectId];
+    [_objectIDs addObject:textObject.objectId];
+    [_canvas addSubview:label];
+}
+
+- (void)shouldRemoveMBLabel:(MBLabel *)label {
+    NSString *objectID = label.textObject.objectId;
+    [label.textObject deleteInBackground];
+    [_MBLabelForObjectID removeObjectForKey:objectID];
+    [_TextObjectForObjectID removeObjectForKey:objectID];
+    [label removeFromSuperview];
+    [_objectIDs removeObject:objectID];
+    [self signifyPageUpdateNeeded];
+}
+
+#pragma mark - MBLabel delegate methods
+
+- (void)translationEndedForTextObject:(TextObject *)textObject {
+    [textObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * __nullable error) {
+        if (succeeded) NSLog(@"SAVED");
+        else NSLog(@"%@",error);
+    }];
+    [self signifyPageUpdateNeeded];
+    textObject.fontSize = [NSNumber numberWithFloat:[textObject.fontSize floatValue]*[textObject.scale floatValue]];
+    textObject.scale = [NSNumber numberWithFloat:1.0];
+}
+
 - (void)shouldBeginEditingMBLabel:(MBLabel *)label {
     self.textField = [[UITextField alloc] initWithFrame:CGRectMake(8, 150, self.canvas.frame.size.width-16, 30)];
     if (label) { //copy formatting
+        _editedLabel = label;
         self.textField.text = label.textObject.text;
         if ([label.textObject.fontSize floatValue] > 70.0) self.textField.font = [UIFont fontWithName:label.textObject.font size:70.0];
         else self.textField.font = [UIFont fontWithName:label.textObject.font size:[label.textObject.fontSize intValue]];
@@ -220,79 +308,6 @@
     _userKeyboardIsShowing = YES;
 }
 
-- (void)addTextObjectToPageUsingTextField: (UITextField *) textField {
-    TextObject *text = [TextObject object];
-    text.text = textField.text;
-    text.font = @"helvetica-bold";
-    text.fontSize = [NSNumber numberWithInt:40];
-    text.scale = [NSNumber numberWithFloat:1.0];
-    CGPoint loc = [self locationForTextObjectUsingPoint:_lastTouchLocation];
-    text.location_x = [NSNumber numberWithFloat: loc.x];
-    text.location_y = [NSNumber numberWithFloat: loc.y];
-    text.rotation = [NSNumber numberWithFloat:0.0];
-    text.color_r = [NSNumber numberWithInt:0];
-    text.color_g = [NSNumber numberWithInt:0];
-    text.color_b = [NSNumber numberWithInt:0];
-    text.parentPageObjectID = self.page.objectId;
-    [text saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
-        if (succeeded) {
-            [_objectIDs addObject:text.objectId];
-            MBLabel *label = [[MBLabel alloc] initWithTextObject:text andCanvas:_canvas];
-            label.delegate = self;
-            [_canvas addSubview:label];
-        }
-        else NSLog(@"%@",error);
-    }];
-    _page.childrenLastUpdated = [NSDate date];
-    [_page saveInBackground];
-}
-
-- (void)endEditing: (UIView *) sender {
-    [self endEditing];
-}
-
-- (void)endEditing {
-    [self.textField resignFirstResponder];
-    if (!_editedTextObject) { [self addTextObjectToPageUsingTextField:_textField]; NSLog(@"UILABEL ADDED"); }
-    else  { [self updateTextObjectUsingTextField:_textField ]; NSLog(@"UILABEL UPDATED"); }
-    [self.textField removeFromSuperview];
-    UIView *view = [self.view viewWithTag:10];
-    [UIView animateWithDuration:0.2 delay:0.0 options: UIViewAnimationOptionCurveEaseInOut
-                     animations:^{ view.alpha = 0.0; }
-                     completion:^(BOOL finished){ [view removeFromSuperview]; }];
-    _userKeyboardIsShowing = NO;
-    _editedTextObject = nil;
-}
-
-- (void)updateTextObjectUsingTextField: (UITextField *) textField {
-    _editedTextObject.text = textField.text;
-    CGFloat red = 0.0;
-    CGFloat green = 0.0;
-    CGFloat blue = 0.0;
-    [NSNumber numberWithInt:[textField.textColor getRed:&red green:&green blue:&blue alpha:nil]];
-    _editedTextObject.color_r = [NSNumber numberWithFloat:red];
-    _editedTextObject.color_g = [NSNumber numberWithFloat:green];
-    _editedTextObject.color_b = [NSNumber numberWithFloat:blue];
-    [_editedTextObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
-        if (succeeded) ; //NSLog(@"TEXT OBJECT SUCCESSFULLY CREATED");
-        else NSLog(@"%@",error);
-    }];
-    _page.childrenLastUpdated = [NSDate date];
-    [_page saveInBackground];
-    MBLabel *label = [_MBLabelForObjectID objectForKey:_editedTextObject.objectId];
-    label.delegate = self;
-    [label updateText];
-}
-
-- (void)shouldRemoveMBLabel:(MBLabel *)label {
-    NSString *objectID = label.textObject.objectId;
-    [label.textObject deleteInBackground];
-    [_MBLabelForObjectID removeObjectForKey:objectID];
-    [_TextObjectForObjectID removeObjectForKey:objectID];
-    [label removeFromSuperview];
-    [_objectIDs removeObject:objectID];
-}
-
 #pragma mark - ISColorWheelDelegate methods
 
 - (void)colorWheelDidChangeColor:(ISColorWheel *)colorWheel {
@@ -312,17 +327,11 @@
     self.textField.frame = CGRectMake(8, self.view.frame.size.height-keyboardFrameBeginRect.size.height-80, self.canvas.frame.size.width-16, 80);
 }
 
-#pragma mark - private text movement / scaling / rotation methods
+#pragma mark - text field delegate methods
 
-- (void)translationEndedForTextObject:(TextObject *)textObject {
-    [textObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError * __nullable error) {
-        if (succeeded) NSLog(@"SAVED");
-        else NSLog(@"%@",error);
-    }];
-    _page.childrenLastUpdated = [NSDate date];
-    [_page saveInBackground];
-    textObject.fontSize = [NSNumber numberWithFloat:[textObject.fontSize floatValue]*[textObject.scale floatValue]];
-    textObject.scale = [NSNumber numberWithFloat:1.0];
+- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+    [self endEditing: nil];
+    return NO;
 }
 
 #pragma mark - touch recognition
@@ -332,15 +341,8 @@
 }
 
 - (IBAction)userTappedCanvas:(UITapGestureRecognizer *)sender {
-    if (_userKeyboardIsShowing) [self endEditing];
+    if (_userKeyboardIsShowing) [self endEditing: nil];
     else [self shouldBeginEditingMBLabel:nil];
-}
-
-#pragma mark - text field delegate methods
-
-- (BOOL)textFieldShouldReturn:(UITextField *)textField {
-    [self endEditing];
-    return NO;
 }
 
 @end
