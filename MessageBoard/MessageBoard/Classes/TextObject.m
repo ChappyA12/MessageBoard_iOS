@@ -30,4 +30,8 @@
     return [NSString stringWithFormat:@"TextObject: \n{text} %@ \n{position} %@,%@",self.text,self.location_x,self.location_y];
 }
 
+- (NSUInteger)hash {
+    return [self.objectId hash]; //object ID is always enique
+}
+
 @end

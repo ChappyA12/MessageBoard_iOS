@@ -93,18 +93,14 @@
                             for (TextObject *testTextObject in result) {
                                 TextObject *existingTextObject = [self textObjectWithObjectID:testTextObject.objectId];
                                 if (existingTextObject) {
+                                    [unverifiedObjects removeObject:existingTextObject];
                                     if (![existingTextObject.updatedAt isEqualToDate:testTextObject.updatedAt]) { //object needs update
                                         NSLog(@"UPDATE");
-                                        [unverifiedObjects removeObject:existingTextObject];
-                                        NSString *Id = existingTextObject.objectId;
-                                        [self removeTextObject:existingTextObject];
-                                        testTextObject.objectId = existingTextObject;
-                                        [self addUILabelUsingTextObject:testTextObject];
-                                        [_textObjects addObject:testTextObject];
+                                        existingTextObject = testTextObject;
+                                        [self updateUILabelUsingTextObject:existingTextObject];
+                                        [self updateUILabelLocationScaleRotationWithTextObject:existingTextObject];
                                     }
-                                    else { //no object update needed
-                                        [unverifiedObjects removeObject:existingTextObject];
-                                    }
+                                    else NSLog(@"SAME");
                                 }
                                 else { //new object needs to be created
                                     NSLog(@"NEW");
