@@ -31,6 +31,7 @@
 		F92DA8221B56D3C6004B7D24 /* Bolts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F92DA81D1B56D3C6004B7D24 /* Bolts.framework */; };
 		F97B35DF1B59675400504163 /* ISColorWheel.m in Sources */ = {isa = PBXBuildFile; fileRef = F97B35DE1B59675400504163 /* ISColorWheel.m */; };
 		F998D9BF1B5710F400975310 /* TextObject.m in Sources */ = {isa = PBXBuildFile; fileRef = F998D9BE1B5710F400975310 /* TextObject.m */; };
+		F9C1748F1B59E9980065963D /* MBLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = F9C1748E1B59E9980065963D /* MBLabel.m */; };
 		F9F6B80E1B56D53300140543 /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F9F6B80B1B56D53300140543 /* libsqlite3.dylib */; };
 		F9F6B80F1B56D53300140543 /* libz.1.1.3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F9F6B80C1B56D53300140543 /* libz.1.1.3.dylib */; };
 		F9F6B8101B56D53300140543 /* libstdc++.6.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F9F6B80D1B56D53300140543 /* libstdc++.6.dylib */; };
@@ -94,6 +95,8 @@
 		F97B35DE1B59675400504163 /* ISColorWheel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ISColorWheel.m; path = "Third Party/ISColorWheel.m"; sourceTree = "<group>"; };
 		F998D9BD1B5710F400975310 /* TextObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TextObject.h; path = Classes/TextObject.h; sourceTree = "<group>"; };
 		F998D9BE1B5710F400975310 /* TextObject.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TextObject.m; path = Classes/TextObject.m; sourceTree = "<group>"; };
+		F9C1748D1B59E9980065963D /* MBLabel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MBLabel.h; path = "UI Classes/MBLabel.h"; sourceTree = "<group>"; };
+		F9C1748E1B59E9980065963D /* MBLabel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MBLabel.m; path = "UI Classes/MBLabel.m"; sourceTree = "<group>"; };
 		F9F6B80B1B56D53300140543 /* libsqlite3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.dylib; path = usr/lib/libsqlite3.dylib; sourceTree = SDKROOT; };
 		F9F6B80C1B56D53300140543 /* libz.1.1.3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.1.1.3.dylib; path = usr/lib/libz.1.1.3.dylib; sourceTree = SDKROOT; };
 		F9F6B80D1B56D53300140543 /* libstdc++.6.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libstdc++.6.dylib"; path = "usr/lib/libstdc++.6.dylib"; sourceTree = SDKROOT; };
@@ -178,7 +181,8 @@
 				F92DA7AE1B56CC9E004B7D24 /* DataViewController.m */,
 				F92DA7B01B56CC9E004B7D24 /* ModelController.h */,
 				F92DA7B11B56CC9E004B7D24 /* ModelController.m */,
-				F9F6B8191B56E77A00140543 /* Classes */,
+				F9F6B8191B56E77A00140543 /* Network Classes */,
+				F9C174901B59E9A50065963D /* UI Classes */,
 				F97B35E01B59675E00504163 /* Third Party */,
 				F92DA7B31B56CC9F004B7D24 /* Main.storyboard */,
 				F92DA7B61B56CC9F004B7D24 /* Assets.xcassets */,
@@ -250,7 +254,16 @@
 			name = "Third Party";
 			sourceTree = "<group>";
 		};
-		F9F6B8191B56E77A00140543 /* Classes */ = {
+		F9C174901B59E9A50065963D /* UI Classes */ = {
+			isa = PBXGroup;
+			children = (
+				F9C1748D1B59E9980065963D /* MBLabel.h */,
+				F9C1748E1B59E9980065963D /* MBLabel.m */,
+			);
+			name = "UI Classes";
+			sourceTree = "<group>";
+		};
+		F9F6B8191B56E77A00140543 /* Network Classes */ = {
 			isa = PBXGroup;
 			children = (
 				F9F6B8161B56E76E00140543 /* MessageBoardPage.h */,
@@ -258,7 +271,7 @@
 				F998D9BD1B5710F400975310 /* TextObject.h */,
 				F998D9BE1B5710F400975310 /* TextObject.m */,
 			);
-			name = Classes;
+			name = "Network Classes";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -397,6 +410,7 @@
 				F9F6B8181B56E76E00140543 /* MessageBoardPage.m in Sources */,
 				F998D9BF1B5710F400975310 /* TextObject.m in Sources */,
 				F92DA7A91B56CC9E004B7D24 /* AppDelegate.m in Sources */,
+				F9C1748F1B59E9980065963D /* MBLabel.m in Sources */,
 				F92DA7B21B56CC9E004B7D24 /* ModelController.m in Sources */,
 				F92DA7A61B56CC9E004B7D24 /* main.m in Sources */,
 				F92DA7AC1B56CC9E004B7D24 /* RootViewController.m in Sources */,
